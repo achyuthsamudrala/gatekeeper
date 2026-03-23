@@ -23,6 +23,8 @@ ML Engineer Repo          GateKeeper Server          Model Endpoints
 
 ## Quickstart
 
+See the full [Getting Started guide](docs/getting-started.md) for a complete walkthrough.
+
 ```bash
 # Clone and start services
 git clone https://github.com/achyuthsamudrala/gatekeeper.git
@@ -135,17 +137,22 @@ gates:
 ## Docs
 
 **Start here:**
+- [Getting Started](docs/getting-started.md) — Clone to first pipeline run in 5 minutes
+- [UI Guide](docs/ui.md) — Dashboard pages, status badges, actions
 - [How It Works](docs/how-it-works.md) — Phase model, workflow patterns, pipeline lifecycle
-- [Extending GateKeeper](docs/plugins.md) — All 6 plugin types, base class signatures, data type schemas, adapter contracts, examples
 
 **Configuration:**
 - [gatekeeper.yaml Reference](docs/gatekeeper-yaml.md) — Per-model gate config
 - [server.yaml Reference](docs/server-yaml.md) — Server-level adapter and auth config
 
-**Deep dives:**
-- [Async Architecture](docs/async-architecture.md) — The 8 async rules with correct/wrong code examples
-- [Adapters](docs/adapters.md) — Registry and serving adapter types and configuration
+**Operations:**
+- [Deployment Guide](docs/deployment.md) — Production setup, scaling, env vars, troubleshooting
 - [GitHub Action](docs/github-action.md) — CI/CD integration with bash + curl + jq
+
+**Extending:**
+- [Extending GateKeeper](docs/plugins.md) — All 6 plugin types, base class specs, data type schemas, adapter contracts
+- [Async Architecture](docs/async-architecture.md) — The 8 async rules with correct/wrong code examples
+- [Adapters](docs/adapters.md) — Registry and serving adapter types
 
 ## License
 
