@@ -1,0 +1,15 @@
+version: "1.0"
+
+registry:
+  type: none
+
+serving:
+  type: none
+
+llm_judge:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  api_key: ${ANTHROPIC_API_KEY}
+
+security:
+  trigger_secret: ${GATEKEEPER_SECRET}

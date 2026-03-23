@@ -1,0 +1,54 @@
+services:
+  backend:
+    build: ./backend
+    command: uvicorn gatekeeper.main:app --host 0.0.0.0 --port 8000 --workers 1
+    ports:
+      - "8000:8000"
+    environment:
+      GATEKEEPER_DATABASE_URL: postgresql+asyncpg://gatekeeper:gatekeeper@db:5432/gatekeeper
+      GATEKEEPER_CONFIG_PATH: /config/server.yaml
+      GATEKEEPER_SECRET: ${GATEKEEPER_SECRET:-changeme}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+    volumes:
+      - ./config:/config:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: gatekeeper
+      POSTGRES_USER: gatekeeper
+      POSTGRES_PASSWORD: gatekeeper
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gatekeeper"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.0
+    command: mlflow server --host 0.0.0.0 --port 5001 --backend-store-uri /mlflow/data
+    ports:
+      - "5001:5001"
+    volumes:
+      - mlflow_data:/mlflow/data
+
+volumes:
+  db_data:
+  mlflow_data:

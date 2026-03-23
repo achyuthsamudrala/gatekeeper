@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gatekeeper-server"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg",
+    "alembic",
+    "pydantic>=2",
+    "pydantic-settings",
+    "httpx>=0.27",
+    "anyio>=4",
+    "evidently>=0.4",
+    "anthropic>=0.25",
+    "pyyaml",
+    "aiofiles",
+    "importlib-metadata>=7",
+]
+
+[project.optional-dependencies]
+mlflow    = ["mlflow>=2"]
+sagemaker = ["boto3", "aiobotocore"]
+pytorch   = ["torch>=2", "transformers>=4"]
+spatial   = ["open3d>=0.18"]
+all       = [
+    "gatekeeper-server[mlflow]",
+    "gatekeeper-server[sagemaker]",
+    "gatekeeper-server[pytorch]",
+]
+test = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "anyio[trio]>=4",
+    "httpx",
+    "pytest-mock",
+    "aiosqlite",
+]
+
+[project.entry-points."gatekeeper.evaluators"]
+accuracy            = "gatekeeper.evaluators.accuracy:AccuracyEvaluator"
+drift               = "gatekeeper.evaluators.drift:DriftEvaluator"
+llm_judge           = "gatekeeper.evaluators.llm_judge:LLMJudgeEvaluator"
+champion_challenger = "gatekeeper.evaluators.champion_challenger:ChampionChallengerEvaluator"
+latency             = "gatekeeper.evaluators.latency:LatencyEvaluator"
+
+[project.entry-points."gatekeeper.model_types"]
+llm     = "gatekeeper.model_types.llm:LLMModelType"
+pytorch = "gatekeeper.model_types.pytorch:PyTorchModelType"
+
+[project.entry-points."gatekeeper.dataset_formats"]
+jsonl   = "gatekeeper.dataset_formats.jsonl:JSONLLoader"
+parquet = "gatekeeper.dataset_formats.parquet:ParquetLoader"
+csv     = "gatekeeper.dataset_formats.csv:CSVLoader"
+
+[project.entry-points."gatekeeper.drift_methods"]
+psi = "gatekeeper.drift_methods.psi:PSIDriftMethod"
+ks  = "gatekeeper.drift_methods.ks:KSDriftMethod"
+
+[project.entry-points."gatekeeper.inference_encodings"]
+json = "gatekeeper.inference_encodings.json_encoding:JSONEncoding"
+
+[project.entry-points."gatekeeper.judge_modalities"]
+text = "gatekeeper.judge_modalities.text:TextModality"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gatekeeper"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
