@@ -6,16 +6,87 @@ Eval-gated model deployment pipeline. Sits between "model artifact exists" and "
 
 ## How It Works
 
+```mermaid
+flowchart TB
+    subgraph trigger ["Trigger"]
+        GH["GitHub Action / CLI"]
+        YAML["gatekeeper.yaml"]
+    end
+
+    GH -- "POST /trigger\n+ gatekeeper.yaml" --> API
+
+    subgraph gk ["GateKeeper Server"]
+        API["FastAPI Router"]
+        EE["Eval Engine"]
+        GE["Gate Policy Engine"]
+        CM["Canary Manager"]
+        AL["Audit Log"]
+
+        API --> EE
+        EE -- "metric results" --> GE
+        GE -- "all gates pass" --> CM
+        EE --> AL
+        GE --> AL
+        CM --> AL
+    end
+
+    subgraph plugins ["Plugin Registries"]
+        EV["Evaluators\naccuracy · drift\nllm_judge · latency\nchampion_challenger"]
+        MT["Model Types\nllm · pytorch"]
+        DF["Dataset Formats\njsonl · csv · parquet"]
+        DM["Drift Methods\npsi · ks"]
+    end
+
+    EE --> EV
+    EE --> MT
+    EE --> DF
+    EV --> DM
+
+    subgraph external ["External Systems"]
+        PG[("PostgreSQL")]
+        REG["Model Registry\nMLflow · SageMaker · S3"]
+        SERVE["Model Endpoints\nChampion · Challenger"]
+        LLM["Anthropic API\n(LLM Judge)"]
+    end
+
+    gk --> PG
+    EE -- "fetch artifact\n/ version" --> REG
+    EE -- "predict()" --> SERVE
+    CM -- "set_traffic_split()" --> SERVE
+    EV -- "judge prompt" --> LLM
+
+    subgraph ui ["Frontend Dashboard"]
+        FE["React + TypeScript\nRuns · Gates · Canary · Audit"]
+    end
+
+    FE -- "poll API" --> API
 ```
-ML Engineer Repo          GateKeeper Server          Model Endpoints
-┌──────────────┐    POST /trigger    ┌──────────┐    predict()    ┌──────────┐
-│gatekeeper.yaml├───────────────────►│ Eval     ├──────────────►│ Champion │
-│              │                     │ Engine   │               │ Challenger│
-└──────────────┘                     └────┬─────┘               └──────────┘
-                                          │
-                                    Gate Policy
-                                    Canary Manager
-                                    Audit Log
+
+### Pipeline Flow
+
+```mermaid
+flowchart LR
+    T(["Trigger"]) --> OFF
+
+    subgraph OFF ["Offline Phase"]
+        direction TB
+        D["Load Dataset"] --> I["Run Inference"]
+        I --> E["Evaluate\naccuracy · drift\nllm_judge"]
+        E --> G1{"Gates\nPass?"}
+    end
+
+    G1 -- "yes" --> ON
+    G1 -- "no" --> F1(["❌ Failed"])
+
+    subgraph ON ["Online Phase"]
+        direction TB
+        L["Latency\nBenchmark"] --> G2{"Gates\nPass?"}
+        G2 -- "yes" --> C["Canary\n10% → observe → auto-promote"]
+    end
+
+    G2 -- "no" --> F2(["❌ Failed"])
+    C --> P(["✅ Promoted"])
+    C -- "errors" --> R(["🔄 Rolled Back"])
 ```
 
 **Two optional, composable phases:**
