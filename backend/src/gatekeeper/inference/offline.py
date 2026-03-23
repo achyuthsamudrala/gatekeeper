@@ -49,7 +49,12 @@ class OfflineInferenceRunner:
         role: str = "challenger",
     ) -> list[dict]:
         model_version = await self.registry_adapter.get_model_version(model_name, version)
-        model_type_def = ModelTypeRegistry.get(model_version.model_type)
+
+        # Resolve model type — fall back to sequential_http if registry returns unknown type
+        if ModelTypeRegistry.has(model_version.model_type):
+            model_type_def = ModelTypeRegistry.get(model_version.model_type)
+        else:
+            return await self._run_remote_sequential(samples, role)
 
         if model_type_def.inference_mode == "local_artifact":
             return await self._run_local(model_name, version, samples, model_type_def)

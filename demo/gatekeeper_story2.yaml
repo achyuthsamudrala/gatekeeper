@@ -1,0 +1,31 @@
+version: "1.0"
+model_type: llm
+eval_dataset:
+  uri: /demo-data/eval.jsonl
+  format: jsonl
+  label_column: expected_label
+  task_type: classification
+reference_dataset:
+  uri: /demo-data/reference.jsonl
+  format: jsonl
+  feature_columns:
+    - text_length
+    - category_id
+gates:
+  - name: accuracy_gate
+    phase: offline
+    evaluator: accuracy
+    metric: f1_weighted
+    threshold: 0.85
+    comparator: ">="
+    blocking: true
+    description: "Weighted F1 must be at least 0.85"
+  - name: drift_gate
+    phase: offline
+    evaluator: drift
+    metric: max_psi_score
+    threshold: 0.25
+    comparator: "<"
+    blocking: true
+    drift_method: psi
+    description: "Max PSI across features must stay below 0.25"
