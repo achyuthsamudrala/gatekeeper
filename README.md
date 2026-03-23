@@ -1,5 +1,7 @@
 # GateKeeper
 
+[![CI](https://github.com/achyuthsamudrala/gatekeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/achyuthsamudrala/gatekeeper/actions/workflows/ci.yml)
+
 Eval-gated model deployment pipeline. Sits between "model artifact exists" and "model serving production traffic" — runs quality gates, latency benchmarks, and canary traffic management before promoting a model to production.
 
 ## How It Works
