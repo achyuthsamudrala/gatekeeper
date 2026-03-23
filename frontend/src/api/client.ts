@@ -8,11 +8,10 @@ import type {
   TriggerResponse,
   RegistryInfo,
   RunFilters,
-  APIError as APIErrorType,
 } from './types';
 import { APIError } from './types';
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const BASE: string = import.meta.env.VITE_API_URL ?? '';
 
 function toQuery(filters?: RunFilters): string {
   if (!filters) return '';

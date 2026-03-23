@@ -12,6 +12,9 @@ function App() {
           <a href="/" className="text-gray-400 hover:text-white text-sm">
             Pipeline Runs
           </a>
+          <a href="/compare" className="text-gray-400 hover:text-white text-sm">
+            Compare
+          </a>
         </div>
       </nav>
       <main className="p-6">
