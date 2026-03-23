@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from gatekeeper.core.database import AsyncSessionFactory
 from gatekeeper.orm import GateResult
@@ -19,7 +19,8 @@ async def evaluate_gates(
 ) -> dict:
     """
     Async gate policy evaluation.
-    Loads GateResult rows from DB and applies threshold comparisons.
+    Loads GateResult rows from DB, applies threshold comparisons,
+    and batches all updates into a single session/commit.
     """
     async with AsyncSessionFactory() as db:
         result = await db.execute(
@@ -32,6 +33,7 @@ async def evaluate_gates(
     config_gates = [g for g in gates_config.get("gates", []) if g.get("phase") == phase]
     gate_details = []
     all_blocking_passed = True
+    updates: list[tuple[str, bool]] = []  # (gate_result_id, passed)
 
     for config_gate in config_gates:
         gate_name = config_gate["name"]
@@ -68,14 +70,7 @@ async def evaluate_gates(
             config_gate.get("threshold"),
         )
 
-        # Update the DB record with pass/fail
-        async with AsyncSessionFactory() as db:
-            from sqlalchemy import update
-
-            await db.execute(
-                update(GateResult).where(GateResult.id == db_result.id).values(passed=passed)
-            )
-            await db.commit()
+        updates.append((db_result.id, passed))
 
         gate_details.append(
             {
@@ -90,6 +85,15 @@ async def evaluate_gates(
 
         if not passed and db_result.blocking:
             all_blocking_passed = False
+
+    # Batch all passed/failed updates into a single session
+    if updates:
+        async with AsyncSessionFactory() as db:
+            for gate_id, passed in updates:
+                await db.execute(
+                    update(GateResult).where(GateResult.id == gate_id).values(passed=passed)
+                )
+            await db.commit()
 
     return {
         "phase": phase,

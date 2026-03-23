@@ -23,7 +23,7 @@ from gatekeeper.settings import settings
 logger = logging.getLogger(__name__)
 
 _cpu_executor = ThreadPoolExecutor(
-    max_workers=4,
+    max_workers=min(8, (os.cpu_count() or 4) + 2),
     thread_name_prefix="gatekeeper-cpu",
 )
 _active_canary_tasks: dict[str, asyncio.Task] = {}
@@ -78,9 +78,25 @@ def print_startup_report(loaded_plugins: dict[str, list[str]]) -> None:
     logger.info("=" * 60)
 
 
+def _warm_imports() -> None:
+    """Pre-import heavy libraries so first evaluator run doesn't pay cold-start cost."""
+    try:
+        import sklearn.metrics  # noqa: F401
+    except ImportError:
+        pass
+    try:
+        import numpy  # noqa: F401
+    except ImportError:
+        pass
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
+
+    # Pre-import heavy dependencies in thread pool to avoid cold-start latency
+    # sklearn import takes ~1.5s; doing it here prevents first-request penalty
+    await asyncio.get_running_loop().run_in_executor(_cpu_executor, _warm_imports)
 
     # Load plugins
     loaded_plugins = load_all_plugins()
@@ -126,6 +142,8 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
+    if adapters.offline_runner:
+        await adapters.offline_runner.shutdown()
     if not isinstance(adapters.serving, NoneServingAdapter):
         await adapters.serving.shutdown()
     await adapters.registry.shutdown()

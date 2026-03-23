@@ -13,7 +13,8 @@ from gatekeeper.registries.model_type import ModelTypeRegistry
 
 
 class OfflineInferenceRunner:
-    """Drives offline model inference. Fully async."""
+    """Drives offline model inference. Fully async.
+    Shares a single httpx.AsyncClient for the lifetime of the runner."""
 
     def __init__(
         self,
@@ -24,6 +25,21 @@ class OfflineInferenceRunner:
         self.registry_adapter = registry_adapter
         self.server_config = server_config
         self.cpu_executor = cpu_executor
+        self._client: httpx.AsyncClient | None = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Lazy-init shared client. Created once, reused across calls."""
+        if self._client is None:
+            self._client = httpx.AsyncClient(
+                timeout=30.0,
+                limits=httpx.Limits(max_connections=50, max_keepalive_connections=10),
+            )
+        return self._client
+
+    async def shutdown(self) -> None:
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     async def run(
         self,
@@ -62,22 +78,22 @@ class OfflineInferenceRunner:
         return [{"text": "no artifact loader"} for _ in samples]
 
     async def _run_remote_sequential(self, samples, role) -> list[dict]:
-        """Sequential async HTTP calls. No concurrency — quality only."""
+        """Sequential async HTTP calls using shared client."""
         serving = self.server_config.get("serving", {})
         url = (
             serving.get("challenger_url", "")
             if role == "challenger"
             else serving.get("champion_url", "")
         )
+        client = await self._get_client()
         results = []
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            for sample in samples:
-                try:
-                    response = await client.post(
-                        f"{url}/v1/chat/completions",
-                        json={"messages": [{"role": "user", "content": str(sample.input)}]},
-                    )
-                    results.append(response.json())
-                except Exception as e:
-                    results.append({"error": str(e)})
+        for sample in samples:
+            try:
+                response = await client.post(
+                    f"{url}/v1/chat/completions",
+                    json={"messages": [{"role": "user", "content": str(sample.input)}]},
+                )
+                results.append(response.json())
+            except Exception as e:
+                results.append({"error": str(e)})
         return results
