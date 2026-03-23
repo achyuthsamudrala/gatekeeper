@@ -134,13 +134,18 @@ gates:
 
 ## Docs
 
-- [How It Works](docs/how-it-works.md)
-- [Async Architecture](docs/async-architecture.md)
-- [gatekeeper.yaml Reference](docs/gatekeeper-yaml.md)
-- [server.yaml Reference](docs/server-yaml.md)
-- [Adapters](docs/adapters.md)
-- [Writing Plugins](docs/plugins.md)
-- [GitHub Action](docs/github-action.md)
+**Start here:**
+- [How It Works](docs/how-it-works.md) — Phase model, workflow patterns, pipeline lifecycle
+- [Extending GateKeeper](docs/plugins.md) — All 6 plugin types, base class signatures, data type schemas, adapter contracts, examples
+
+**Configuration:**
+- [gatekeeper.yaml Reference](docs/gatekeeper-yaml.md) — Per-model gate config
+- [server.yaml Reference](docs/server-yaml.md) — Server-level adapter and auth config
+
+**Deep dives:**
+- [Async Architecture](docs/async-architecture.md) — The 8 async rules with correct/wrong code examples
+- [Adapters](docs/adapters.md) — Registry and serving adapter types and configuration
+- [GitHub Action](docs/github-action.md) — CI/CD integration with bash + curl + jq
 
 ## License
 
