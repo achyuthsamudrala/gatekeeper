@@ -50,6 +50,7 @@ def generate_sample(label: str, idx: int) -> dict:
         "text": text,
         "text_length": text_length,
         "category_id": category_id,
+        "sentiment": label,
         "expected_label": label,
     }
 

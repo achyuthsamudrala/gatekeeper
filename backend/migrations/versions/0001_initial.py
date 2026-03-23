@@ -8,7 +8,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision: str = "0001"
 down_revision: Union[str, None] = None
@@ -19,7 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "pipeline_runs",
-        sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
+        sa.Column("id", sa.String(), primary_key=True),
         sa.Column("model_name", sa.String(), nullable=False),
         sa.Column("candidate_version", sa.String(), nullable=False),
         sa.Column("champion_version", sa.String(), nullable=True),
@@ -31,15 +30,15 @@ def upgrade() -> None:
         sa.Column("registry_type", sa.String(), nullable=False, server_default="none"),
         sa.Column("serving_type", sa.String(), nullable=False, server_default="none"),
         sa.Column("gatekeeper_yaml", sa.String(), nullable=False),
-        sa.Column("github_context", postgresql.JSONB(), nullable=True),
+        sa.Column("github_context", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         "gate_results",
-        sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("pipeline_run_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("pipeline_runs.id"), nullable=False),
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column("pipeline_run_id", sa.String(), sa.ForeignKey("pipeline_runs.id"), nullable=False),
         sa.Column("phase", sa.String(), nullable=False),
         sa.Column("gate_name", sa.String(), nullable=False),
         sa.Column("gate_type", sa.String(), nullable=False),
@@ -50,14 +49,14 @@ def upgrade() -> None:
         sa.Column("passed", sa.Boolean(), nullable=True),
         sa.Column("blocking", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("skip_reason", sa.String(), nullable=True),
-        sa.Column("detail", postgresql.JSONB(), nullable=True),
+        sa.Column("detail", sa.JSON(), nullable=True),
         sa.Column("evaluated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 
     op.create_table(
         "canary_snapshots",
-        sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("pipeline_run_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("pipeline_runs.id"), nullable=False),
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column("pipeline_run_id", sa.String(), sa.ForeignKey("pipeline_runs.id"), nullable=False),
         sa.Column("timestamp", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("champion_latency_p50_ms", sa.Float(), nullable=True),
         sa.Column("champion_latency_p95_ms", sa.Float(), nullable=True),
@@ -67,17 +66,17 @@ def upgrade() -> None:
         sa.Column("challenger_error_rate", sa.Float(), nullable=True),
         sa.Column("champion_request_count", sa.Integer(), nullable=True),
         sa.Column("challenger_request_count", sa.Integer(), nullable=True),
-        sa.Column("detail", postgresql.JSONB(), nullable=True),
+        sa.Column("detail", sa.JSON(), nullable=True),
     )
 
     op.create_table(
         "audit_logs",
-        sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("pipeline_run_id", postgresql.UUID(as_uuid=False), sa.ForeignKey("pipeline_runs.id"), nullable=False),
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column("pipeline_run_id", sa.String(), sa.ForeignKey("pipeline_runs.id"), nullable=False),
         sa.Column("phase", sa.String(), nullable=False),
         sa.Column("action", sa.String(), nullable=False),
         sa.Column("actor", sa.String(), nullable=False, server_default="system"),
-        sa.Column("detail", postgresql.JSONB(), nullable=True),
+        sa.Column("detail", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
 

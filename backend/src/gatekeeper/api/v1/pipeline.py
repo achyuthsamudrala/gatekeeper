@@ -150,6 +150,10 @@ async def trigger_pipeline(
     )
     await db.flush()
 
+    # Commit before launching background task so the PipelineRun row
+    # is visible to the eval engine's separate DB sessions
+    await db.commit()
+
     # Inject runtime metadata into config for the eval engine
     config["_model_name"] = req.model_name
     config["_candidate_version"] = req.candidate_version

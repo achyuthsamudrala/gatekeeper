@@ -56,14 +56,17 @@ trap cleanup EXIT
 
 echo "Generating eval and reference datasets..."
 cd "$PROJECT_DIR"
-python demo/generate_data.py
+source .venv/bin/activate && python demo/generate_data.py
 echo ""
 
 # ── Start mock model server ───────────────────────────────────────────────────
 
 echo "Starting mock model server on port $MOCK_PORT..."
+# Kill any stale process on the port
+lsof -ti :"$MOCK_PORT" | xargs kill -9 2>/dev/null || true
+sleep 1
 cd "$PROJECT_DIR"
-uvicorn demo.mock_model:app --port "$MOCK_PORT" --log-level warning &
+python -m uvicorn demo.mock_model:app --port "$MOCK_PORT" --log-level warning &
 MOCK_PID=$!
 sleep 2
 
