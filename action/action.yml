@@ -1,0 +1,74 @@
+name: 'GateKeeper Eval Gate'
+description: 'Trigger GateKeeper eval pipeline and wait for results'
+inputs:
+  gatekeeper_url:
+    description: 'GateKeeper server URL (e.g. https://gatekeeper.example.com)'
+    required: true
+  gatekeeper_secret:
+    description: 'Shared trigger secret'
+    required: true
+  model_name:
+    description: 'Model name to evaluate'
+    required: true
+  candidate_version:
+    description: 'Candidate model version (defaults to git SHA)'
+    required: false
+    default: ''
+  phase:
+    description: 'Phase to run: offline, online, or both'
+    required: false
+    default: 'offline'
+  gatekeeper_yaml:
+    description: 'Path to gatekeeper.yaml config file'
+    required: true
+  poll_interval:
+    description: 'Poll interval in seconds'
+    required: false
+    default: '15'
+  timeout:
+    description: 'Max wait time in seconds'
+    required: false
+    default: '1800'
+
+outputs:
+  pipeline_run_id:
+    description: 'The pipeline run ID'
+    value: ${{ steps.trigger.outputs.pipeline_run_id }}
+  result:
+    description: 'Final result: passed or failed'
+    value: ${{ steps.poll.outputs.result }}
+  report_url:
+    description: 'URL to the gate report'
+    value: ${{ steps.trigger.outputs.report_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Trigger pipeline
+      id: trigger
+      shell: bash
+      run: ${{ github.action_path }}/trigger.sh
+      env:
+        GATEKEEPER_URL: ${{ inputs.gatekeeper_url }}
+        GATEKEEPER_SECRET: ${{ inputs.gatekeeper_secret }}
+        MODEL_NAME: ${{ inputs.model_name }}
+        CANDIDATE_VERSION: ${{ inputs.candidate_version || github.sha }}
+        PHASE: ${{ inputs.phase }}
+        GATEKEEPER_YAML: ${{ inputs.gatekeeper_yaml }}
+        GITHUB_RUN_ID: ${{ github.run_id }}
+        GITHUB_SHA: ${{ github.sha }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    - name: Poll for results
+      id: poll
+      shell: bash
+      run: ${{ github.action_path }}/poll.sh
+      env:
+        GATEKEEPER_URL: ${{ inputs.gatekeeper_url }}
+        GATEKEEPER_SECRET: ${{ inputs.gatekeeper_secret }}
+        PIPELINE_RUN_ID: ${{ steps.trigger.outputs.pipeline_run_id }}
+        POLL_INTERVAL: ${{ inputs.poll_interval }}
+        TIMEOUT: ${{ inputs.timeout }}
+        PHASE: ${{ inputs.phase }}
