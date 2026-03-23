@@ -1,0 +1,48 @@
+version: "1.0"
+model_type: llm
+eval_dataset:
+  uri: ./examples/pattern-c-chained/data/eval.jsonl
+  format: jsonl
+  label_column: label
+  task_type: classification
+reference_dataset:
+  uri: ./examples/pattern-c-chained/data/reference.jsonl
+  format: jsonl
+  feature_columns: [text]
+gates:
+  - name: accuracy_gate
+    phase: offline
+    evaluator: accuracy
+    metric: f1_weighted
+    threshold: 0.80
+    comparator: ">="
+    blocking: true
+    description: "F1 must be at least 0.80"
+  - name: drift_gate
+    phase: offline
+    evaluator: drift
+    metric: max_psi_score
+    threshold: 0.25
+    comparator: "<"
+    blocking: true
+    drift_method: psi
+    description: "Drift below 0.25"
+  - name: latency_gate
+    phase: online
+    evaluator: latency
+    metric: p95_latency_ms
+    threshold: 500
+    comparator: "<"
+    blocking: true
+    num_warmup_requests: 3
+    num_benchmark_requests: 20
+    description: "P95 latency under 500ms"
+canary:
+  traffic_percent: 10
+  observation_window_minutes: 5
+  auto_promote_threshold:
+    latency_p95_ms: 500
+    error_rate: 0.05
+  auto_rollback_threshold:
+    latency_p95_ms: 2000
+    error_rate: 0.20

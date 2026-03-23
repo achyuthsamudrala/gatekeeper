@@ -1,0 +1,39 @@
+version: "1.0"
+model_type: llm
+eval_dataset:
+  uri: ./examples/pattern-a-offline-only/data/eval.jsonl
+  format: jsonl
+  label_column: label
+  task_type: classification
+reference_dataset:
+  uri: ./examples/pattern-a-offline-only/data/reference.jsonl
+  format: jsonl
+  feature_columns: [text]
+gates:
+  - name: accuracy_gate
+    phase: offline
+    evaluator: accuracy
+    metric: f1_weighted
+    threshold: 0.80
+    comparator: ">="
+    blocking: true
+    description: "F1 score must be at least 0.80"
+  - name: drift_gate
+    phase: offline
+    evaluator: drift
+    metric: max_psi_score
+    threshold: 0.25
+    comparator: "<"
+    blocking: true
+    drift_method: psi
+    description: "PSI drift must stay below 0.25"
+  - name: quality_gate
+    phase: offline
+    evaluator: llm_judge
+    metric: llm_judge_score
+    threshold: 0.70
+    comparator: ">="
+    blocking: false
+    rubric: "Rate the quality of the model output from 0 to 1. Consider accuracy, completeness, and relevance."
+    num_samples: 5
+    description: "LLM judge quality check (non-blocking)"

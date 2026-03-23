@@ -1,0 +1,16 @@
+version: "1.0"
+model_type: llm
+eval_dataset:
+  uri: ./examples/pattern-d-custom-evaluator/data/eval.jsonl
+  format: jsonl
+  label_column: label
+  task_type: classification
+gates:
+  - name: word_count_gate
+    phase: offline
+    evaluator: word_count
+    metric: avg_word_count
+    threshold: 5.0
+    comparator: ">="
+    blocking: true
+    description: "Average word count must be at least 5"
