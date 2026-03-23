@@ -1,0 +1,9 @@
+text,category,expected_output
+The economy grew 3%,business,positive
+Stocks plummeted after the report,business,negative
+The team won the championship,sports,positive
+Player injured during practice,sports,negative
+New vaccine shows promising results,health,positive
+Hospital faces budget cuts,health,negative
+Tech startup raises $50M in funding,technology,positive
+Major data breach affects millions,technology,negative

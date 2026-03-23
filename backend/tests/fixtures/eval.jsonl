@@ -1,0 +1,8 @@
+{"text": "The economy grew 3%", "category": "business", "expected_output": "positive"}
+{"text": "Stocks plummeted after the report", "category": "business", "expected_output": "negative"}
+{"text": "The team won the championship", "category": "sports", "expected_output": "positive"}
+{"text": "Player injured during practice", "category": "sports", "expected_output": "negative"}
+{"text": "New vaccine shows promising results", "category": "health", "expected_output": "positive"}
+{"text": "Hospital faces budget cuts", "category": "health", "expected_output": "negative"}
+{"text": "Tech startup raises $50M in funding", "category": "technology", "expected_output": "positive"}
+{"text": "Major data breach affects millions", "category": "technology", "expected_output": "negative"}
